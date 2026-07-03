@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>心理機能ログ解析 | MBTI Cognitive Function Analyzer</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<header class="app-header">
+  <h1>心理機能ログ解析</h1>
+  <p class="subtitle">LINE / Discord のトーク履歴から、心理機能(認知機能)の傾向とMBTIタイプを推定します</p>
+</header>
+
+<main>
+  <section class="card" id="privacy-note">
+    <p>
+      🔒 このツールはすべて<strong>あなたのブラウザ内だけ</strong>で処理されます。ログの内容は、どこにも送信・保存されません。
+    </p>
+    <p class="disclaimer">
+      ⚠️ これは会話文中の言葉遣いや文体の傾向から心理機能の可能性を推定する簡易的な分析ツールであり、心理学的に検証された診断ではありません。参考・エンタメとしてご利用ください。
+    </p>
+  </section>
+
+  <section class="card" id="input-section">
+    <h2>1. ログを入力する</h2>
+    <div class="input-row">
+      <label>
+        形式
+        <select id="format-select">
+          <option value="auto">自動判定</option>
+          <option value="line">LINE</option>
+          <option value="discord">Discord</option>
+          <option value="generic">汎用(「名前: メッセージ」形式)</option>
+        </select>
+      </label>
+      <label class="file-label">
+        ファイルを選択(.txt)
+        <input type="file" id="file-input" accept=".txt,.log,text/plain" />
+      </label>
+    </div>
+    <textarea id="log-input" placeholder="ここにLINEやDiscordのトーク履歴をペーストするか、上のファイル選択から .txt ファイルを読み込んでください。"></textarea>
+    <button id="parse-btn" class="primary-btn">ログを解析する</button>
+    <p id="parse-status" class="status-text"></p>
+  </section>
+
+  <section class="card hidden" id="speaker-section">
+    <h2>2. 分析する話者を選ぶ</h2>
+    <p class="hint">MBTI推定は1人ずつ行います。分析したい話者を選んでください。</p>
+    <div id="speaker-list" class="speaker-list"></div>
+    <button id="analyze-btn" class="primary-btn" disabled>この人を分析する</button>
+  </section>
+
+  <section class="card hidden" id="result-section">
+    <h2>3. 分析結果</h2>
+    <div class="result-grid">
+      <div class="radar-wrap">
+        <svg id="radar-chart" class="radar-chart"></svg>
+      </div>
+      <div class="type-result">
+        <div class="estimated-type">
+          <span class="label">推定タイプ</span>
+          <span id="estimated-type" class="type-code">----</span>
+          <span id="estimated-type-name" class="type-name"></span>
+        </div>
+        <div id="stack-detail" class="stack-detail"></div>
+        <h3>候補タイプ トップ3</h3>
+        <ol id="candidate-list" class="candidate-list"></ol>
+      </div>
+    </div>
+    <h3>心理機能ごとのスコア詳細</h3>
+    <div id="function-detail" class="function-detail"></div>
+  </section>
+</main>
+
+<footer>
+  <p>本ツールはユング/マイヤーズ=ブリッグスの認知機能理論(8機能・機能スタック)に基づくヒューリスティック分析です。</p>
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
