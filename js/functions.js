@@ -67,7 +67,7 @@ export const KEYWORDS = {
       "ふと思った", "閃いた", "ひらめいた", "案外", "意外と", "色々考えると",
       "ありかも", "なくはない", "if", "というより",
     ]),
-    ...KW(["なんか", "たら面白い", "だったら面白い", "妄想", "発想"], 0.7),
+    ...KW(["たら面白い", "だったら面白い", "妄想", "発想"], 0.7),
   ],
   Ni: [
     ...KW([
@@ -118,12 +118,15 @@ export const KEYWORDS = {
     ...KW(["みんな", "チーム", "仲間"], 0.6),
   ],
   Fi: [
+    // 「私は」「好き」のような誰でも使う一人称・好悪表現は除外し、
+    // 価値観や内面の一致・不一致を語る、より特徴的な言い回しに絞る。
     ...KW([
-      "自分は", "私は", "個人的には", "価値観", "信念", "大切にしてる",
-      "違和感がある", "譲れない", "自分らしく", "本音を言うと", "心から",
-      "素直に言うと", "自分にとっては", "納得できる", "納得できない",
+      "個人的には", "価値観", "信念", "大切にしてる", "大切にしている",
+      "違和感がある", "違和感を覚える", "譲れない", "自分らしく", "自分らしさ",
+      "本音を言うと", "本音では", "素直に言うと", "自分にとっては", "自分の中では",
+      "納得できる", "納得できない", "腑に落ちない", "腑に落ちる",
+      "自分に正直に", "心の底では", "偽りたくない",
     ]),
-    ...KW(["好き", "嫌い", "感じる"], 0.5),
   ],
 };
 
@@ -164,13 +167,35 @@ export function scoreFunctions(messages) {
   raw.Se += (shortMsgCount / n) * 2 + (exclaimCount / n) * 1.5;
   raw.Si += (longMsgCount / n) * 1.5;
   raw.Fe += (questionCount / n) * 1; // 相手を気にかける問いかけ
-  raw.Fi += (exclaimCount / n) * 0.3;
 
   // メッセージ数で割って「1メッセージあたりの密度」にする
   for (const fn of FUNCTIONS) {
     raw[fn] = raw[fn] / n;
   }
   return raw;
+}
+
+/**
+ * 1対1のDMは相槌や言い回しがミラーリングされやすく、
+ * 「その会話に共通する話し方の癖」(例: 短文が多い、絵文字が多い等)が
+ * 両話者に均等に乗ってしまい、誰を分析しても似たようなタイプに寄りやすい。
+ * 会話に参加している全話者の生スコアの平均を引くことで、
+ * その人固有の偏り(相手と比べて何が強いか)だけを取り出す。
+ * 話者が1人しかいない場合は比較対象がないため元のスコアをそのまま返す。
+ * @param {Record<string, number>} raw 対象話者の生スコア
+ * @param {Record<string, number>[]} allRaw 会話に登場する全話者の生スコア
+ */
+export function adjustRelativeToConversation(raw, allRaw) {
+  if (allRaw.length < 2) return raw;
+  const mean = {};
+  for (const fn of FUNCTIONS) {
+    mean[fn] = allRaw.reduce((sum, r) => sum + r[fn], 0) / allRaw.length;
+  }
+  const adjusted = {};
+  for (const fn of FUNCTIONS) {
+    adjusted[fn] = raw[fn] - mean[fn];
+  }
+  return adjusted;
 }
 
 /**

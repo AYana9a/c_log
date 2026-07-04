@@ -1,5 +1,11 @@
 import { parseLog, groupBySpeaker } from "./parser.js";
-import { FUNCTIONS, FUNCTION_INFO, scoreFunctions, normalizeScores } from "./functions.js";
+import {
+  FUNCTIONS,
+  FUNCTION_INFO,
+  scoreFunctions,
+  adjustRelativeToConversation,
+  normalizeScores,
+} from "./functions.js";
 import { TYPE_STACKS, TYPE_INFO, matchTypes } from "./mbti.js";
 import { drawRadar } from "./radar.js";
 
@@ -95,11 +101,13 @@ els.analyzeBtn.addEventListener("click", () => {
   if (!selectedSpeaker) return;
   const messages = speakerMap.get(selectedSpeaker);
   const raw = scoreFunctions(messages);
-  const normalized = normalizeScores(raw);
+  const allRaw = [...speakerMap.values()].map(scoreFunctions);
+  const adjusted = adjustRelativeToConversation(raw, allRaw);
+  const normalized = normalizeScores(adjusted);
   const ranking = matchTypes(normalized);
 
   renderRadar(normalized);
-  renderTypeResult(ranking, normalized, messages.length);
+  renderTypeResult(ranking, messages.length, speakerMap.size >= 2);
   renderFunctionDetail(normalized);
 
   els.resultSection.classList.remove("hidden");
@@ -112,17 +120,21 @@ function renderRadar(normalized) {
   drawRadar(els.radarChart, labels, values);
 }
 
-function renderTypeResult(ranking, normalized, msgCount) {
+function renderTypeResult(ranking, msgCount, isRelative) {
   const top = ranking[0];
   els.estimatedType.textContent = top.type;
   els.estimatedTypeName.textContent = TYPE_INFO[top.type] ? `(${TYPE_INFO[top.type]}タイプ)` : "";
 
   const stack = TYPE_STACKS[top.type];
   const stackLabels = ["主機能", "補助機能", "第三機能", "劣勢機能"];
+  const relativeNote = isRelative
+    ? "<br/>※ 会話に登場する話者全員の平均と比べた相対的な偏りから算出しています"
+    : "";
   els.stackDetail.innerHTML =
     `<strong>${top.type}</strong> の機能スタック: ` +
     stack.map((fn, i) => `${stackLabels[i]}=${fn}`).join(" / ") +
-    `<br/>分析に使用したメッセージ数: ${msgCount}件`;
+    `<br/>分析に使用したメッセージ数: ${msgCount}件` +
+    relativeNote;
 
   els.candidateList.innerHTML = "";
   ranking.slice(0, 3).forEach((r) => {
