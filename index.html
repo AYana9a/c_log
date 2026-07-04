@@ -15,7 +15,7 @@
 <main>
   <section class="card" id="privacy-note">
     <p>
-      🔒 このツールはすべて<strong>あなたのブラウザ内だけ</strong>で処理されます。ログの内容は、どこにも送信・保存されません。
+      🔒 デフォルトの「ローカル解析」では、すべて<strong>あなたのブラウザ内だけ</strong>で処理されます。ログの内容は、どこにも送信・保存されません。「AI解析」を選んだ場合のみ、選択した話者の発言があなた自身のAPIキーでAnthropic社に送信されます(詳細は手順2で表示されます)。
     </p>
     <p class="disclaimer">
       ⚠️ これは会話文中の言葉遣いや文体の傾向から心理機能の可能性を推定する簡易的な分析ツールであり、心理学的に検証された診断ではありません。参考・エンタメとしてご利用ください。
@@ -48,11 +48,52 @@
     <h2>2. 分析する話者を選ぶ</h2>
     <p class="hint">MBTI推定は1人ずつ行います。分析したい話者を選んでください。</p>
     <div id="speaker-list" class="speaker-list"></div>
+
+    <fieldset class="mode-fieldset">
+      <legend>解析方式</legend>
+      <label class="mode-option">
+        <input type="radio" name="analyze-mode" value="local" checked />
+        <span>
+          <strong>ローカル解析(キーワード方式)</strong>
+          <small>ブラウザ内だけで完結。何も送信されません。話し相手や話題によって結果がぶれやすい簡易版です。</small>
+        </span>
+      </label>
+      <label class="mode-option">
+        <input type="radio" name="analyze-mode" value="ai" />
+        <span>
+          <strong>AI解析(Claude API・要APIキー)</strong>
+          <small>選択した話者の発言内容が、あなたのAPIキーで直接Anthropic社に送信されます。文脈を理解した分析で、話し相手が変わっても結果が安定しやすくなります。</small>
+        </span>
+      </label>
+    </fieldset>
+
+    <div id="ai-options" class="ai-options hidden">
+      <p class="disclaimer">
+        ⚠️ このモードを選ぶと、上で選んだ話者の発言(相手の発言は含みません)がAnthropic社のClaude APIに送信されます。APIキーはこのブラウザのlocalStorageにのみ保存され、他のどこにも送信されません。
+      </p>
+      <div class="input-row">
+        <label class="field">
+          Anthropic APIキー
+          <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" />
+        </label>
+        <label class="field">
+          モデル
+          <select id="model-select"></select>
+        </label>
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="save-key-checkbox" />
+        このブラウザにAPIキーを保存する
+      </label>
+    </div>
+
     <button id="analyze-btn" class="primary-btn" disabled>この人を分析する</button>
+    <p id="analyze-status" class="status-text"></p>
   </section>
 
   <section class="card hidden" id="result-section">
     <h2>3. 分析結果</h2>
+    <p id="result-mode-note" class="status-text"></p>
     <div class="result-grid">
       <div class="radar-wrap">
         <svg id="radar-chart" class="radar-chart"></svg>

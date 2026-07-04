@@ -176,6 +176,75 @@ textarea {
   margin-left: auto;
 }
 
+.mode-fieldset {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem 1rem 1.1rem;
+  margin: 1rem 0;
+}
+
+.mode-fieldset legend {
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding: 0 0.4rem;
+}
+
+.mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.5rem 0.2rem;
+  cursor: pointer;
+}
+
+.mode-option input {
+  margin-top: 0.3rem;
+}
+
+.mode-option strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.mode-option small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+  line-height: 1.5;
+}
+
+.ai-options {
+  border-left: 3px solid var(--accent);
+  padding: 0.2rem 0 0.2rem 1rem;
+  margin: -0.4rem 0 1rem;
+}
+
+.ai-options .input-row {
+  margin-top: 0.6rem;
+}
+
+#api-key-input {
+  min-width: 220px;
+  font-family: monospace;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.function-card .fai-reason {
+  font-size: 0.78rem;
+  color: var(--accent);
+  margin-top: 0.4rem;
+  font-style: italic;
+}
+
 .result-grid {
   display: grid;
   grid-template-columns: minmax(260px, 340px) 1fr;
