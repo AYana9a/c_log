@@ -24,6 +24,20 @@ const els = {
 let speakerMap = new Map(); // speaker -> messages[]
 let selectedSpeaker = null;
 
+// 巨大なログを貼り付けるとテキストエリアの内部スクロール量が数十万pxになり、
+// カーソルが乗っているだけでページ全体のスクロールを吸い込んでしまう。
+// 編集フォーカス中でない限りはホイール操作をページのスクロールへ流す。
+els.logInput.addEventListener(
+  "wheel",
+  (e) => {
+    if (document.activeElement !== els.logInput) {
+      e.preventDefault();
+      window.scrollBy(0, e.deltaY);
+    }
+  },
+  { passive: false }
+);
+
 els.fileInput.addEventListener("change", async () => {
   const file = els.fileInput.files[0];
   if (!file) return;
