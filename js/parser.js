@@ -10,7 +10,8 @@
  */
 function parseLine(text) {
   const lines = text.split(/\r\n|\r|\n/);
-  const timeNamePattern = /^(\d{1,2}:\d{2})\t([^\t]+)\t(.*)$/;
+  // 名前欄は「メッセージの送信を取り消しました」等のシステム通知では空になるため [^\t]* で許容する
+  const timeNamePattern = /^(\d{1,2}:\d{2})\t([^\t]*)\t(.*)$/;
   const dateHeaderPattern = /^\d{4}[./]\d{1,2}[./]\d{1,2}.*$/;
   const messages = [];
   let current = null;
@@ -22,7 +23,9 @@ function parseLine(text) {
     const m = line.match(timeNamePattern);
     if (m) {
       if (current) messages.push(current);
-      current = { speaker: m[2].trim(), text: m[3] };
+      const speaker = m[2].trim();
+      // 名前が空 = メッセージ取消などのシステム通知行なので話者に紐付けない
+      current = speaker ? { speaker, text: m[3] } : null;
     } else if (current && line.trim() !== "") {
       // 前のメッセージの続き(複数行メッセージ)
       current.text += "\n" + line;
@@ -95,14 +98,16 @@ export function parseLog(text, format = "auto") {
   if (format === "discord") return parseDiscord(text);
   if (format === "generic") return parseGeneric(text);
 
-  // auto: 最もヒット数が多いパーサーを採用する
-  const candidates = [
-    { name: "line", result: parseLine(text) },
-    { name: "discord", result: parseDiscord(text) },
-    { name: "generic", result: parseGeneric(text) },
-  ];
-  candidates.sort((a, b) => b.result.length - a.result.length);
-  return candidates[0].result;
+  // auto: LINE/Discordは構文が厳密で誤検出しにくいため優先し、
+  // どちらにも当てはまらない場合のみ汎用パーサー(「名前:メッセージ」)にフォールバックする。
+  // 汎用パーサーは "19:15" のような時刻表記も「名前:本文」として誤認識してしまうため、
+  // ヒット数だけで比較すると常に汎用パーサーが勝ってしまう問題があった。
+  const lineResult = parseLine(text);
+  const discordResult = parseDiscord(text);
+  if (lineResult.length > 0 || discordResult.length > 0) {
+    return lineResult.length >= discordResult.length ? lineResult : discordResult;
+  }
+  return parseGeneric(text);
 }
 
 /**
