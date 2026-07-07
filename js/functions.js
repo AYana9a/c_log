@@ -85,12 +85,15 @@ export const KEYWORDS = {
     ...KW(["気がする"], 0.3),
   ],
   Se: [
+    // 「写真」「動画」はLINE/Discordが添付ファイルの代わりに自動挿入する
+    // [写真][動画] というプレースホルダーにほぼ全て起因しており、本人の
+    // 言葉ではなく「画像を送った回数」という無関係な統計になってしまうため除外。
     ...KW([
       "今すぐ", "見て見て", "行こう", "やってみよう",
       "盛り上がる", "即決", "現場", "リアルタイム",
       "その場で", "とりあえずやる", "勢いで",
     ]),
-    ...KW(["やばい", "楽しそう", "テンション", "これ見て", "写真", "動画", "うまい", "かっこいい", "綺麗"], 0.5),
+    ...KW(["やばい", "楽しそう", "テンション", "これ見て", "うまい", "かっこいい", "綺麗"], 0.5),
     ...KW(["まじで", "マジで"], 0.25),
   ],
   Si: [
@@ -148,20 +151,13 @@ export function scoreFunctions(messages) {
   const raw = Object.fromEntries(FUNCTIONS.map((f) => [f, 0]));
   if (!messages.length) return raw;
 
-  let totalChars = 0;
-  let exclaimCount = 0;
-  let questionCount = 0;
-  let longMsgCount = 0;
-  let shortMsgCount = 0;
-
-  for (const msg of messages) {
-    const text = msg;
-    totalChars += text.length;
-    if (/[!!]/.test(text)) exclaimCount++;
-    if (/[??]/.test(text)) questionCount++;
-    if (text.length >= 40) longMsgCount++;
-    if (text.length <= 6) shortMsgCount++;
-
+  // メッセージの長さ・「!」「?」の頻度といった文体の統計は、以前は
+  // 「短文が多い→Se」「長文が多い→Si」のように加点材料として使っていたが、
+  // これは実質「LINE/Discordで短い相槌を連投しがちか」「たまたま長い説明を
+  // した話題があったか」を測っているだけで、心理機能とは別の要因(媒体の
+  // 作法・その日の話題)に左右されやすい。何を"言っているか"だけで判断する
+  // ため、こうした文体統計による加点は行わない。
+  for (const text of messages) {
     for (const fn of FUNCTIONS) {
       for (const [pattern, weight] of KEYWORDS[fn]) {
         if (text.includes(pattern)) {
@@ -172,13 +168,6 @@ export function scoreFunctions(messages) {
   }
 
   const n = messages.length;
-  // 構造的なヒューリスティクス(キーワードだけでは拾えない文体傾向)を加点。
-  // LINE/Discordは誰でも短文を連投しがちなメディアなので、短文率への加点は
-  // 強くしすぎるとSeが常に高くなるだけの汎用シグナルになってしまうため小さめにする。
-  raw.Se += (shortMsgCount / n) * 0.8 + (exclaimCount / n) * 1.5;
-  raw.Si += (longMsgCount / n) * 1.5;
-  raw.Fe += (questionCount / n) * 1; // 相手を気にかける問いかけ
-
   // メッセージ数で割って「1メッセージあたりの密度」にする
   for (const fn of FUNCTIONS) {
     raw[fn] = raw[fn] / n;
